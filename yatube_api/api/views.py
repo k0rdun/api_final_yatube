@@ -5,8 +5,10 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
 from rest_framework import filters
 
-from .serializers import *
+from .serializers import GroupSerializer, FollowSerializer, \
+    PostSerializer, CommentSerializer
 from .permissions import OwnerOrReadOnly
+from posts.models import Post, Comment, Group, Follow, User
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -23,14 +25,14 @@ class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = (OwnerOrReadOnly,)
-    
+
     def get_queryset(self):
         post_id = self.kwargs.get('post_id')
         post = get_object_or_404(Post, id=post_id)
         return Comment.objects.filter(
             post=post
         )
-    
+
     def perform_create(self, serializer):
         post_id = self.kwargs.get('post_id')
         post = get_object_or_404(Post, id=post_id)
@@ -54,10 +56,10 @@ class FollowViewSet(generics.ListCreateAPIView):
         return Follow.objects.filter(
             user=self.request.user
         )
-    
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-    
+
     def create(self, request):
         user = request.user
         try:
@@ -66,7 +68,9 @@ class FollowViewSet(generics.ListCreateAPIView):
             )
         except User.DoesNotExist:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        if user == following \
-            or Follow.objects.filter(user=user, following=following).exists():
+        if (
+            user == following
+            or Follow.objects.filter(user=user, following=following).exists()
+        ):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         return super().create(request)

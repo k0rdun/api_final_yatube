@@ -22,7 +22,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def get_user(self, obj):
         return obj.user.username
-    
+
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         ret['following'] = instance.following.username
